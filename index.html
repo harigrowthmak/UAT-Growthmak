@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UAT Automation | GrowthMak</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="background-globes">
+        <div class="globe globe-1"></div>
+        <div class="globe globe-2"></div>
+    </div>
+
+    <main class="container">
+        <header class="header">
+            <img src="https://i.ibb.co/TDybg7B8/GM-Logo.png" alt="GrowthMak Logo" class="logo">
+        </header>
+
+        <section class="card glass-effect">
+            <div class="card-content">
+                <h1 class="page-title">UAT</h1>
+                <p class="page-subtitle">Launch automated User Acceptance Testing for your digital assets.</p>
+
+                <form id="reviewForm" class="review-form">
+
+                    <div class="form-group">
+                        <label for="docUrl" class="form-label">URL</label>
+                        <input type="url" id="docUrl" name="docUrl" class="form-input"
+                            placeholder="https://example.com/..." required>
+                    </div>
+
+
+
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <span class="btn-text">Launch UAT Suite</span>
+                        <div class="loader hidden"></div>
+                    </button>
+
+                    <div id="statusMessage" class="status-message hidden"></div>
+                </form>
+
+                <div id="successView" class="success-view hidden">
+                    <div class="success-icon">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="12" fill="#D1FAE5" />
+                            <path d="M7 13L10 16L17 9" stroke="#059669" stroke-width="3" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <h2 class="success-title">UAT Completed</h2>
+                    <div id="statusBadge" class="status-badge">Success</div>
+                    <p class="success-message">This is the UAT google sheet URL</p>
+                    <a href="#" id="successLink" class="submit-btn success-btn" target="_blank">
+                        Open UAT Report
+                    </a>
+                    <button id="resetBtn" class="reset-link">Submit another request</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Processing Overlay -->
+    <div id="processingOverlay" class="overlay hidden">
+        <div class="overlay-content">
+            <div class="processing-animation">
+                <div class="ripple"></div>
+                <div class="ripple delay-1"></div>
+                <div class="ripple delay-2"></div>
+                <img src="https://i.ibb.co/TDybg7B8/GM-Logo.png" alt="Processing" class="overlay-logo">
+            </div>
+            <h2 class="overlay-title">Processing Request</h2>
+            <div class="processing-steps">
+                <div class="step active">
+                    <span class="step-dot"></span>
+                    <span class="step-text">Initializing UAT Suite</span>
+                </div>
+                <div class="step active">
+                    <span class="step-dot"></span>
+                    <span class="step-text">Executing Automated Tests</span>
+                </div>
+                <div class="step">
+                    <span class="step-dot"></span>
+                    <span class="step-text">Generating UAT Report</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

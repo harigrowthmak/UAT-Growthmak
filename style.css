@@ -1,0 +1,523 @@
+:root {
+    --bg-color: #FFFFFF;
+    /* Pure White */
+    --card-bg: #FFFFFF;
+    --text-primary: #1D1D1D;
+    /* Deep Dark Grey */
+    --text-secondary: #686868;
+    /* Mid-Dark Grey */
+    --accent-color: #0787FE;
+    /* Corporate Blue */
+    --input-bg: #FFFFFF;
+    --input-border: #E5E7EB;
+    --input-focus: #0787FE;
+    --success-color: #10B981;
+    --error-color: #EF4444;
+    --font-heading: 'Outfit', sans-serif;
+    --font-body: 'Inter', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Background Ambient Glows - Subtle and Light */
+.background-globes {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 50%, rgba(7, 135, 254, 0.03) 0%, rgba(255, 255, 255, 0) 70%);
+}
+
+.globe {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.6;
+    animation: float 25s infinite alternate ease-in-out;
+}
+
+.globe-1 {
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(7, 135, 254, 0.05), transparent 70%);
+    top: -200px;
+    left: -200px;
+}
+
+.globe-2 {
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(7, 135, 254, 0.03), transparent 70%);
+    bottom: -200px;
+    right: -200px;
+    animation-delay: -5s;
+}
+
+@keyframes float {
+    0% {
+        transform: translate(0, 0);
+    }
+
+    100% {
+        transform: translate(40px, 40px);
+    }
+}
+
+.container {
+    width: 100%;
+    max-width: 550px;
+    padding: 2rem;
+    position: relative;
+    z-index: 10;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    animation: fadeInDown 0.8s ease-out;
+}
+
+.logo {
+    max-width: 250px;
+    height: auto;
+    /* Invert logo for light theme if needed, or assume the provided logo works well on light */
+    /* If the logo is white text, we might need a dark version or filter it */
+    /* Assuming the logo provided (GM) has dark elements or works on white.
+       If it's white text, we need to invert it. Let's add a filter just in case it's pure white.
+       The screenshot showed it had color, so it should be fine. */
+}
+
+.card {
+    background: var(--card-bg);
+    /* Clean, modern shadow instead of glassmorphism */
+    box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.05);
+    border: 1px solid #F3F4F6;
+    border-radius: 24px;
+    overflow: visible;
+    /* Changed to visible for potential popouts */
+    animation: fadeInUp 0.8s ease-out 0.2s backwards;
+}
+
+.card-content {
+    padding: 3.5rem 3rem;
+}
+
+.page-title {
+    font-family: var(--font-heading);
+    font-size: 2.25rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    text-align: center;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+}
+
+.page-subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: 3rem;
+    font-size: 1rem;
+    line-height: 1.6;
+    font-weight: 400;
+}
+
+.form-group {
+    margin-bottom: 1.75rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.6rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.form-input,
+.form-select {
+    width: 100%;
+    padding: 1.1rem 1.25rem;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 12px;
+    /* Slightly rounded inputs */
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-family: var(--font-body);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+}
+
+.form-input:focus,
+.form-select:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 4px rgba(7, 135, 254, 0.1);
+}
+
+.form-input::placeholder {
+    color: #9CA3AF;
+}
+
+.select-wrapper {
+    position: relative;
+}
+
+.form-select {
+    appearance: none;
+    cursor: pointer;
+    background-color: #fff;
+}
+
+.select-icon {
+    position: absolute;
+    right: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #9CA3AF;
+    transition: color 0.3s ease;
+}
+
+.form-select:focus+.select-icon {
+    color: var(--accent-color);
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 1.2rem;
+    /* Taller button */
+    margin-top: 1.5rem;
+    background-color: var(--accent-color);
+    border: none;
+    border-radius: 80px;
+    /* Fully rounded pill shape as requested */
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 500;
+    font-family: var(--font-heading);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(7, 135, 254, 0.25);
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(7, 135, 254, 0.35);
+    background-color: #0674DB;
+    /* Slightly darker on hover */
+}
+
+.submit-btn:active {
+    transform: translateY(0);
+}
+
+.submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+    background-color: #9CA3AF;
+    box-shadow: none;
+}
+
+/* Loading Animation - White for contrast on blue button */
+.loader {
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.btn-text.invisible {
+    visibility: hidden;
+}
+
+.hidden {
+    display: none;
+}
+
+@keyframes spin {
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Status Messages */
+.status-message {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    text-align: center;
+    opacity: 0;
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+.status-success {
+    background: #ECFDF5;
+    color: #059669;
+    border: 1px solid #D1FAE5;
+}
+
+.status-error {
+    background: #FEF2F2;
+    color: #DC2626;
+    border: 1px solid #FEE2E2;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+/* Processing Overlay */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.5s ease;
+}
+
+.overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.overlay-content {
+    text-align: center;
+    max-width: 400px;
+}
+
+.processing-animation {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.overlay-logo {
+    width: 80px;
+    height: auto;
+    position: relative;
+    z-index: 2;
+}
+
+.ripple {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid var(--accent-color);
+    opacity: 0;
+    animation: ripple 2s infinite cubic-bezier(0, 0.2, 0.8, 1);
+}
+
+.delay-1 {
+    animation-delay: 0.5s;
+}
+
+.delay-2 {
+    animation-delay: 1s;
+}
+
+@keyframes ripple {
+    0% {
+        width: 0;
+        height: 0;
+        opacity: 1;
+    }
+
+    100% {
+        width: 250px;
+        height: 250px;
+        opacity: 0;
+    }
+}
+
+.overlay-title {
+    font-size: 1.5rem;
+    font-family: var(--font-heading);
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.overlay-subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+
+.processing-steps {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-direction: column;
+    align-items: flex-start;
+    margin: 0 auto;
+    width: fit-content;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0.5;
+    transition: opacity 0.3s ease;
+}
+
+.step.active {
+    opacity: 1;
+}
+
+.step-dot {
+    width: 8px;
+    height: 8px;
+    background-color: var(--accent-color);
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.step-text {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Success View */
+.success-view {
+    text-align: center;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.success-icon {
+    margin-bottom: 1.5rem;
+}
+
+.success-title {
+    font-family: var(--font-heading);
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.success-message {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.success-btn {
+    display: inline-block;
+    text-decoration: none;
+    line-height: 1.5;
+    /* Vertical centering fix */
+}
+
+.reset-link {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    margin-top: 1.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    text-decoration: underline;
+    font-family: var(--font-body);
+}
+
+.reset-link:hover {
+    color: var(--accent-color);
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-block;
+    padding: 0.5rem 1.25rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    text-transform: capitalize;
+    background: #ECFDF5;
+    color: #059669;
+    border: 1px solid #D1FAE5;
+}
+
+.status-badge.status-info {
+    background: #EFF6FF;
+    color: #0787FE;
+    border: 1px solid #DBEAFE;
+}
+
+.status-badge.status-warning {
+    background: #FEF3C7;
+    color: #D97706;
+    border: 1px solid #FDE68A;
+}
