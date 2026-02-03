@@ -521,3 +521,27 @@ body {
     color: #D97706;
     border: 1px solid #FDE68A;
 }
+
+/* Embedded Google Sheet Container */
+.sheet-container {
+    margin: 2rem 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--input-border);
+}
+
+.sheet-iframe {
+    width: 100%;
+    height: 600px;
+    border: none;
+    display: block;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .sheet-iframe {
+        height: 400px;
+    }
+}
+
