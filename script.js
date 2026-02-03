@@ -48,13 +48,14 @@ reviewForm.addEventListener('submit', async (e) => {
 
         if (response.ok) {
             const result = await response.json();
-            // result is expected to contain the google sheet url
-            // We assume the response might be { url: "..." } or similar
-            // If the user says "responds from n8n which be the google sheet url", it might be a direct string or a JSON field.
-            // Let's handle both.
-            const sheetUrl = result.url || result.spreadsheetUrl || result.output || (typeof result === 'string' ? result : null);
+            // Extract the googlesheet field from the webhook response
+            const sheetUrl = result.googlesheet || result.url || result.spreadsheetUrl || result.output || (typeof result === 'string' ? result : null);
 
-            showSuccess(sheetUrl || docUrl, result);
+            if (sheetUrl) {
+                showSuccess(sheetUrl, result);
+            } else {
+                throw new Error('No Google Sheet URL found in response');
+            }
         } else {
             throw new Error(`Server responded with status: ${response.status}`);
         }
@@ -119,6 +120,21 @@ function showSuccess(sheetUrl, result) {
     // Set success link
     successLink.href = sheetUrl;
 
+    // Convert Google Sheets URL from edit to preview mode for embedding
+    let embedUrl = sheetUrl;
+    if (sheetUrl.includes('/edit')) {
+        embedUrl = sheetUrl.replace('/edit', '/preview');
+    } else if (!sheetUrl.includes('/preview')) {
+        // If it doesn't have /edit or /preview, append /preview
+        embedUrl = sheetUrl + (sheetUrl.includes('?') ? '&' : '?') + 'widget=true&headers=false';
+    }
+
+    // Set the iframe source to display the Google Sheet
+    const sheetIframe = document.getElementById('sheetIframe');
+    if (sheetIframe) {
+        sheetIframe.src = embedUrl;
+    }
+
     // Update status badge if result contains status
     if (result && result.status) {
         statusBadge.textContent = result.status;
@@ -172,6 +188,12 @@ function resetForm() {
     // Reset status badge
     statusBadge.textContent = 'Success';
     statusBadge.className = 'status-badge';
+
+    // Clear the iframe
+    const sheetIframe = document.getElementById('sheetIframe');
+    if (sheetIframe) {
+        sheetIframe.src = '';
+    }
 }
 
 // Form field animations and validation
