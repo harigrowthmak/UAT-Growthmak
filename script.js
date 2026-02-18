@@ -1,10 +1,14 @@
 // ─── Config ───────────────────────────────────────────────────────────────────
 const WEBHOOK_URL = 'https://n8n.srv896372.hstgr.cloud/webhook/uat-growthmak';
-const RESULT_URL = 'https://uat-com.free.beeceptor.com/result';  // n8n POSTs here; we poll here
-const POLL_INTERVAL = 4000;   // poll every 4 seconds
-const POLL_TIMEOUT = 300000; // stop polling after 5 minutes
 
-// ─── DOM ──────────────────────────────────────────────────────────────────────
+// Public notification channel (free, no login, robust for hours)
+const NTFY_TOPIC = 'growthmak_uat_results';
+const NTFY_URL = `https://ntfy.sh/${NTFY_TOPIC}/sse`;
+
+// Timeout: 4 hours (to safely cover the 3 hour requirement)
+const MAX_WAIT_TIME = 4 * 60 * 60 * 1000;
+
+// ─── DOM Elements ─────────────────────────────────────────────────────────────
 const reviewForm = document.getElementById('reviewForm');
 const submitBtn = document.getElementById('submitBtn');
 const btnText = submitBtn.querySelector('.btn-text');
@@ -16,138 +20,110 @@ const successLink = document.getElementById('successLink');
 const resetBtn = document.getElementById('resetBtn');
 const statusBadge = document.getElementById('statusBadge');
 
-let pollTimer = null;
+let eventSource = null;
+let timeoutTimer = null;
 
 // ─── Form Submit ──────────────────────────────────────────────────────────────
 reviewForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const docUrl = document.getElementById('docUrl').value.trim();
-    if (!docUrl) { showStatus('Please enter a URL', 'error'); return; }
+    if (!docUrl) { showStatus('Please enter a website URL', 'error'); return; }
+
+    // Generate a unique ID for this specific run
+    const requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    console.log('Starting UAT. Request ID:', requestId);
 
     startProcessing();
 
+    // 1. Start listening for the result BEFORE sending the request
+    // This ensures we don't miss the notification if n8n is super fast
+    listenForResults(requestId);
+
     try {
-        // Step 1: Send URL to n8n webhook (fire and forget — n8n will POST result to Beeceptor)
+        // 2. Send the job to n8n
         const res = await fetch(WEBHOOK_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: docUrl, timestamp: new Date().toISOString() })
+            body: JSON.stringify({
+                url: docUrl,
+                requestId: requestId,  // Pass ID so n8n can send it back
+                timestamp: new Date().toISOString()
+            })
         });
 
-        const rawText = await res.text();
-        console.log('n8n webhook response:', rawText);
-
-        // Try to parse n8n response directly first (in case n8n returns the sheet URL immediately)
-        let directResult = null;
-        try { directResult = JSON.parse(rawText); } catch { directResult = { output: rawText }; }
-
-        const directUrl = extractSheetUrl(directResult);
-        if (directUrl) {
-            // n8n returned the URL directly — no polling needed
-            console.log('Got URL directly from n8n:', directUrl);
-            showSuccess(directUrl, directResult);
-            return;
+        if (!res.ok) {
+            throw new Error(`Server error: ${res.status}`);
         }
 
-        // Step 2: n8n didn't return URL directly — start polling Beeceptor
-        console.log('No URL in n8n response. Starting to poll:', RESULT_URL);
-        startPolling();
+        console.log('Job submitted to n8n. Waiting for results via ntfy.sh...');
 
     } catch (err) {
-        console.error('Error sending to webhook:', err);
-        // Even if webhook call fails, still poll — n8n may have received it
-        console.log('Webhook error but still polling...');
-        startPolling();
+        console.error('Submission error:', err);
+        stopProcessing();
+        showStatus('Failed to start UAT. Please check your connection.', 'error');
+        if (eventSource) { eventSource.close(); eventSource = null; }
     }
 });
 
-// ─── Polling ──────────────────────────────────────────────────────────────────
-function startPolling() {
-    const startTime = Date.now();
+// ─── Listen for Completion (ntfy.sh) ──────────────────────────────────────────
+function listenForResults(targetRequestId) {
+    if (eventSource) eventSource.close();
 
-    pollTimer = setInterval(async () => {
-        // Timeout check
-        if (Date.now() - startTime > POLL_TIMEOUT) {
-            clearInterval(pollTimer);
-            stopProcessing();
-            showStatus('Timed out waiting for UAT results. Please try again.', 'error');
-            return;
-        }
+    console.log(`Listening to ${NTFY_URL} for ID: ${targetRequestId}`);
+    eventSource = new EventSource(NTFY_URL);
 
+    // Set 4-hour safety timeout
+    timeoutTimer = setTimeout(() => {
+        console.warn('Process timed out (4 hours).');
+        stop();
+        showStatus('UAT process timed out (exceeded 4 hours).', 'error');
+    }, MAX_WAIT_TIME);
+
+    eventSource.onmessage = (event) => {
         try {
-            const res = await fetch(RESULT_URL, {
-                method: 'GET',
-                headers: { 'Accept': 'application/json' }
-            });
+            const data = JSON.parse(event.data);
+            // ntfy sends the message body in 'message' field, or directly if structured
+            // We expect n8n to send JSON string as the message body
 
-            if (!res.ok) {
-                console.log('Poll: not ready yet, status', res.status);
-                return; // Keep polling
+            let payload = {};
+            try {
+                payload = JSON.parse(data.message); // Parse the inner JSON from n8n
+            } catch {
+                // Should not happen if n8n sends JSON, but robust fallback:
+                console.log('Received raw message:', data.message);
+                return;
             }
 
-            const rawText = await res.text();
-            console.log('Poll response:', rawText);
+            console.log('Received update:', payload);
 
-            let result = null;
-            try { result = JSON.parse(rawText); } catch { result = { output: rawText }; }
+            // Check if this result is for US (matching requestId)
+            if (payload.requestId === targetRequestId || payload.request_id === targetRequestId) {
+                console.log('Match found! Process complete.');
 
-            const sheetUrl = extractSheetUrl(result);
-            if (sheetUrl) {
-                clearInterval(pollTimer);
-                showSuccess(sheetUrl, result);
-            } else {
-                console.log('Poll: got response but no sheet URL yet:', rawText);
+                const sheetUrl = extractSheetUrl(payload);
+                if (sheetUrl) {
+                    stop(); // Close connection
+                    showSuccess(sheetUrl, payload);
+                } else {
+                    console.warn('Got matching ID but no Sheet URL found:', payload);
+                }
             }
-
-        } catch (err) {
-            console.log('Poll error (will retry):', err.message);
+        } catch (e) {
+            console.error('Error parsing notification:', e);
         }
-    }, POLL_INTERVAL);
+    };
+
+    eventSource.onerror = (err) => {
+        // SSE drops sometimes; browser auto-reconnects. We just log it.
+        console.log('Connection check (sse)...', err);
+    };
 }
 
-// ─── Extract Google Sheet URL from any response shape ─────────────────────────
-function extractSheetUrl(data) {
-    if (!data) return null;
-
-    if (typeof data === 'string') {
-        const match = data.match(/https?:\/\/docs\.google\.com\/spreadsheets\/[^\s"'<>]+/);
-        return match ? match[0] : null;
-    }
-
-    if (Array.isArray(data)) {
-        for (const item of data) {
-            const found = extractSheetUrl(item);
-            if (found) return found;
-        }
-        return null;
-    }
-
-    if (typeof data === 'object') {
-        const fields = [
-            'googlesheet', 'googleSheet', 'google_sheet',
-            'spreadsheetUrl', 'sheetUrl', 'sheet_url',
-            'url', 'output', 'result', 'link', 'href'
-        ];
-        for (const f of fields) {
-            if (data[f] && typeof data[f] === 'string' && data[f].startsWith('http')) {
-                return data[f];
-            }
-        }
-        // Scan all string values with regex
-        for (const key of Object.keys(data)) {
-            if (typeof data[key] === 'string') {
-                const match = data[key].match(/https?:\/\/docs\.google\.com\/spreadsheets\/[^\s"'<>]+/);
-                if (match) return match[0];
-            }
-            if (typeof data[key] === 'object') {
-                const found = extractSheetUrl(data[key]);
-                if (found) return found;
-            }
-        }
-    }
-
-    return null;
+function stop() {
+    if (eventSource) { eventSource.close(); eventSource = null; }
+    if (timeoutTimer) { clearTimeout(timeoutTimer); timeoutTimer = null; }
+    stopProcessingUI();
 }
 
 // ─── UI Helpers ───────────────────────────────────────────────────────────────
@@ -161,47 +137,62 @@ function startProcessing() {
         requestAnimationFrame(() => processingOverlay.classList.add('visible'));
     }, 200);
 
+    // Start step animation
     const steps = document.querySelectorAll('.step');
-    steps.forEach((s, i) => {
-        s.classList.remove('active');
-        setTimeout(() => s.classList.add('active'), 1500 * (i + 1));
-    });
+    steps.forEach((s) => s.classList.remove('active'));
+
+    // Animate steps over time to simulate progress
+    // Since it can take 3 hours, we just show the first few steps quickly
+    setTimeout(() => steps[0].classList.add('active'), 1000); // Initializing
+    setTimeout(() => steps[1].classList.add('active'), 4000); // Running checks
+    // Last step 'Generating report' stays inactive until success
 }
 
-function stopProcessing() {
-    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+function stopProcessingUI() {
     submitBtn.disabled = false;
     btnText.classList.remove('invisible');
     loader.classList.add('hidden');
-    hideOverlay();
-}
-
-function hideOverlay() {
     processingOverlay.classList.remove('visible');
     setTimeout(() => processingOverlay.classList.add('hidden'), 500);
 }
 
 function showSuccess(sheetUrl, result) {
-    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
-    hideOverlay();
-    reviewForm.classList.add('hidden');
-    successView.classList.remove('hidden');
+    // Light up final step
+    const steps = document.querySelectorAll('.step');
+    if (steps[2]) steps[2].classList.add('active');
 
-    successLink.href = sheetUrl;
+    setTimeout(() => {
+        stopProcessingUI();
+        reviewForm.classList.add('hidden');
+        successView.classList.remove('hidden');
 
-    let embedUrl = sheetUrl;
-    if (sheetUrl.includes('/edit')) embedUrl = sheetUrl.replace('/edit', '/preview');
-    else if (!sheetUrl.includes('/preview')) {
-        embedUrl = sheetUrl + (sheetUrl.includes('?') ? '&' : '?') + 'widget=true&headers=false';
+        successLink.href = sheetUrl;
+
+        let embedUrl = sheetUrl;
+        if (sheetUrl.includes('/edit')) embedUrl = sheetUrl.replace('/edit', '/preview');
+        else if (!sheetUrl.includes('/preview')) {
+            embedUrl = sheetUrl + (sheetUrl.includes('?') ? '&' : '?') + 'widget=true&headers=false';
+        }
+
+        const iframe = document.getElementById('sheetIframe');
+        if (iframe) iframe.src = embedUrl;
+
+        statusBadge.textContent = '✓ Success';
+        if (result && result.status && result.status !== 'Success') {
+            statusBadge.textContent = '✓ ' + result.status;
+        }
+    }, 800); // Small delay to let user see 'Generating report' checkmark
+}
+
+function extractSheetUrl(data) {
+    if (!data) return null;
+    const fields = ['googlesheet', 'googleSheet', 'spreadsheetUrl', 'url', 'link'];
+    if (typeof data === 'object') {
+        for (const f of fields) {
+            if (data[f] && typeof data[f] === 'string' && data[f].startsWith('http')) return data[f];
+        }
     }
-    const iframe = document.getElementById('sheetIframe');
-    if (iframe) iframe.src = embedUrl;
-
-    if (result && result.status) {
-        statusBadge.textContent = '✓ ' + result.status;
-        if (result.status.toLowerCase() === 'warning') statusBadge.classList.add('status-warning');
-        else if (result.status.toLowerCase() === 'info') statusBadge.classList.add('status-info');
-    }
+    return null;
 }
 
 function showStatus(message, type) {
@@ -212,19 +203,12 @@ function showStatus(message, type) {
 }
 
 function resetForm() {
-    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    stop();
     reviewForm.reset();
     successView.classList.add('hidden');
     reviewForm.classList.remove('hidden');
-    submitBtn.disabled = false;
-    btnText.classList.remove('invisible');
-    loader.classList.add('hidden');
     statusMessage.classList.add('hidden');
-    processingOverlay.classList.remove('visible');
-    processingOverlay.classList.add('hidden');
-    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
     statusBadge.textContent = '✓ Success';
-    statusBadge.className = 'status-badge';
     const iframe = document.getElementById('sheetIframe');
     if (iframe) iframe.src = '';
 }
