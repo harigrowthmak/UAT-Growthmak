@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UAT Automation | GrowthMak</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <main class="container">
+        <header class="header">
+            <img src="https://i.ibb.co/TDybg7B8/GM-Logo.png" alt="GrowthMak Logo" class="logo">
+        </header>
+
+        <section class="card">
+            <div class="card-content">
+                <h1 class="page-title">UAT</h1>
+                <p class="page-subtitle">Launch automated User Acceptance Testing for your digital assets.</p>
+
+                <form id="reviewForm">
+                    <div class="form-group">
+                        <label for="docUrl" class="form-label">Website URL</label>
+                        <input type="url" id="docUrl" name="docUrl" class="form-input" placeholder="https://example.com"
+                            required>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <span class="btn-text">Launch UAT Suite</span>
+                        <div class="btn-loader hidden"></div>
+                    </button>
+
+                    <div id="statusMessage" class="status-message hidden"></div>
+                </form>
+
+                <!-- Success View -->
+                <div id="successView" class="success-view hidden">
+                    <div class="success-icon">
+                        <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+                            <circle cx="28" cy="28" r="28" fill="#ECFDF5" />
+                            <path d="M18 29L24 35L38 21" stroke="#10B981" stroke-width="3" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <h2 class="success-title">UAT Completed</h2>
+                    <div id="statusBadge" class="status-badge">✓ Success</div>
+                    <p class="success-message">Your UAT report is ready.</p>
+                    <a href="#" id="successLink" class="submit-btn success-link-btn" target="_blank">
+                        Open UAT Report ↗
+                    </a>
+                    <div id="sheetContainer" class="sheet-container">
+                        <iframe id="sheetIframe" class="sheet-iframe" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                    <button id="resetBtn" class="reset-btn">← Submit another URL</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ═══════════════════════════════════════
+         LOADING OVERLAY — Simple & Premium
+    ═══════════════════════════════════════ -->
+    <div id="processingOverlay" class="overlay hidden">
+        <div class="overlay-box">
+
+            <!-- Spinner -->
+            <div class="spinner-wrap">
+                <div class="spinner-ring"></div>
+                <img src="https://i.ibb.co/TDybg7B8/GM-Logo.png" alt="GrowthMak" class="spinner-logo">
+            </div>
+
+            <h2 class="overlay-title">Running UAT<span
+                    class="ellipsis"><span>.</span><span>.</span><span>.</span></span></h2>
+            <p class="overlay-sub">This may take a minute. Please wait.</p>
+
+            <!-- Steps -->
+            <div class="steps">
+                <div class="step">
+                    <div class="step-dot"></div>
+                    <span>Initializing test suite</span>
+                </div>
+                <div class="step">
+                    <div class="step-dot"></div>
+                    <span>Running automated checks</span>
+                </div>
+                <div class="step">
+                    <div class="step-dot"></div>
+                    <span>Generating report</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

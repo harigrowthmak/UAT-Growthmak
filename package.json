@@ -1,0 +1,12 @@
+{
+  "name": "uat-growthmak",
+  "version": "1.0.0",
+  "description": "UAT Automation endpoint for GrowthMak",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
